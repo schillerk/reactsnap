@@ -1,0 +1,20 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+}
+
+form {
+  display: inline-block;
+}
+
+.stored-forms {
+  display: inline-block;
+}
+
+.stored-form{
+  border: 1px solid black;
+  margin: 5px;
+  padding: 5px;
+  text-align: left;
+}
