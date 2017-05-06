@@ -2,33 +2,38 @@ import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
 
-const DEFAULT_TYPES = ["People"];
+const DEFAULT_TYPE = "People";
 
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
       text: "",
-      todos: DEFAULT_TYPES,
-      selectedType: DEFAULT_TYPES[0],
-      currentForm: {
-        data: [{
+      types: [DEFAULT_TYPE],
+      selectedType: DEFAULT_TYPE,
+      openForms: {
+        [DEFAULT_TYPE]: [{
           rowData: ["", ""],
-          children: []
+          children: [],
         }],
-        type: "",
       },
-      storedForms: [],
+      storedForms: { [DEFAULT_TYPE]: [] },
     };
   }
 
   handleSubmit(e) {
     e.preventDefault();
-    const newTodos = this.state.todos;
-    newTodos.push(this.state.text);
+    const newTypes = this.state.types;
+    const newOpenForms = this.state.openForms;
+    const newStoredForms = this.state.storedForms;
+    newTypes.push(this.state.text);
+    newOpenForms[this.state.text] = [{ rowData: ["", ""], children: [] }];
+    newStoredForms[this.state.text] = [];
     this.setState({
       text: "",
-      todos: newTodos,
+      types: newTypes,
+      openForms: newOpenForms,
+      storedForms: newStoredForms,
     });
   }
 
@@ -38,10 +43,10 @@ class App extends Component {
 
   handleClick(e) {
     const index = e.target.value;
-    const newTodos = this.state.todos;
-    newTodos.splice(index,1);
+    const newTypes = this.state.types;
+    newTypes.splice(index,1);
     this.setState({
-      todos: newTodos,
+      types: newTypes,
     })
   }
 
@@ -52,75 +57,77 @@ class App extends Component {
   }
 
   handleFormChange(row, index, e) {
-    const newForm = this.state.currentForm;
-    newForm['data'][row]['rowData'][index] = e.target.value;
-    this.setState({currentForm: newForm});
+    const { openForms, selectedType } = this.state;
+    const newForm = openForms;
+    newForm[selectedType][row]['rowData'][index] = e.target.value;
+    this.setState({openForms: newForm});
     this.maybeCreateNewRow(e);
   }
 
   maybeCreateNewRow(e) {
     e.preventDefault();
-    const last = this.state.currentForm['data'][this.state.currentForm['data'].length-1]['rowData'];
+    const { openForms, selectedType } = this.state;
+    const last = openForms[selectedType][openForms[selectedType].length-1]['rowData'];
     if (last[0] || last[1]) {
-      const newForm = this.state.currentForm;
-      newForm['data'].push({
+      const newForm = openForms;
+      newForm[selectedType].push({
         rowData: ["", ""],
         children: [],
       });
-      this.setState({currentForm: newForm});
+      this.setState({openForms: newForm});
     }
   }
 
   handleFormSubmit(e) {
     const newStoredForms = this.state.storedForms;
-    const newCurrentForm = this.state.currentForm;
-    newCurrentForm["type"] = this.state.selectedType;
-    newStoredForms.push(newCurrentForm);
+    newStoredForms[this.state.selectedType].push(this.state.openForms[this.state.selectedType]);
     this.setState({
-      currentForm: {
-        data: [{
+      openForms: {
+        [this.state.selectedType]: [{
           rowData: ["", ""],
-          children: []
+          children: [],
         }],
-        type: "",
       },
       storedForm: newStoredForms,
     });
   }
 
   renderStoredForms() {
-    const storedForms = this.state.storedForms.map( (form, index) => {
-      const formatedForm = form['data'].map( (row, rowIndex) => {
+    const { storedForms, selectedType } = this.state;
+    const renderedForms = storedForms[selectedType].map( (form, index) => {
+      const formatedForm = form.map( (row, rowIndex) => {
         return row['rowData'][0] || row['rowData'][1] ?
           <div key={rowIndex}>
             {`${row['rowData'][0]}: ${row['rowData'][1]}`}
           </div> : null;
       })
-      return form['type'] === this.state.selectedType ? (
+      return (
         <div key={index} className="stored-form">
           {formatedForm}
         </div>
-      ) : null;
+      );
     })
     return (
       <div className="stored-forms">
-        {storedForms}
+        {renderedForms}
       </div>
     );
   }
 
   handleParentify(e) {
-    const newForm = this.state.currentForm;
+    const { openForms, selectedType } = this.state;
+    const newForm = openForms;
     const index = e.target.value;
-    newForm['data'][index]['children'].push({
+    newForm[selectedType][index]['children'].push({
       rowData: ["", ""],
       children: []
     });
-    this.setState({ currentForm: newForm, });
+    this.setState({ openForms: newForm, });
   }
 
-  renderForm() {
-    const formElements = this.state.currentForm['data'].map( (row, index) => {
+  renderOpenForm() {
+    const { openForms, selectedType } = this.state;
+    const formElements = openForms[selectedType].map( (row, index) => {
       const children = row['children'].map( (child, childIndex) => {
         console.log(child);
         return (
@@ -141,24 +148,24 @@ class App extends Component {
     })
     return (
       <div>
-        <h1>{this.state.selectedType}</h1>
+        <h1>{selectedType}</h1>
         {formElements}
         <button onClick={this.handleFormSubmit.bind(this)}>SUBMIT</button>
       </div>
     );
   }
 
-  renderTodos() {
-    const todos = this.state.todos.map( (todo, index) => {
+  renderTypes() {
+    const types = this.state.types.map( (type, index) => {
       return (
         <div key={index}>
-          <button value={todo} onClick={this.selectType.bind(this)}>V</button>
-          {todo}
+          <button value={type} onClick={this.selectType.bind(this)}>V</button>
+          {type}
           <button value={index} onClick={this.handleClick.bind(this)}>X</button>
         </div>
       );
     })
-    return todos;
+    return types;
   }
 
   render() {
@@ -171,8 +178,8 @@ class App extends Component {
         <form onSubmit={this.handleSubmit.bind(this)}>
           <input type="text" value={this.state.text} onChange={this.handleChange.bind(this)}/>
         </form>
-        {this.renderTodos()}
-        {this.renderForm()}
+        {this.renderTypes()}
+        {this.renderOpenForm()}
         {this.renderStoredForms()}
       </div>
     );
