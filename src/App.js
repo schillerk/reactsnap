@@ -11,7 +11,13 @@ class App extends Component {
       text: "",
       todos: DEFAULT_TYPES,
       selectedType: DEFAULT_TYPES[0],
-      currentForm: { data: [["", ""]], type: "" },
+      currentForm: {
+        data: [{
+          rowData: ["", ""],
+          children: []
+        }],
+        type: "",
+      },
       storedForms: [],
     };
   }
@@ -47,17 +53,20 @@ class App extends Component {
 
   handleFormChange(row, index, e) {
     const newForm = this.state.currentForm;
-    newForm['data'][row][index] = e.target.value
+    newForm['data'][row]['rowData'][index] = e.target.value;
     this.setState({currentForm: newForm});
     this.maybeCreateNewRow(e);
   }
 
   maybeCreateNewRow(e) {
     e.preventDefault();
-    const last = this.state.currentForm['data'][this.state.currentForm['data'].length-1];
+    const last = this.state.currentForm['data'][this.state.currentForm['data'].length-1]['rowData'];
     if (last[0] || last[1]) {
       const newForm = this.state.currentForm;
-      newForm['data'].push(["", ""]);
+      newForm['data'].push({
+        rowData: ["", ""],
+        children: [],
+      });
       this.setState({currentForm: newForm});
     }
   }
@@ -68,7 +77,13 @@ class App extends Component {
     newCurrentForm["type"] = this.state.selectedType;
     newStoredForms.push(newCurrentForm);
     this.setState({
-      currentForm: { data: [["", ""]], type: "" },
+      currentForm: {
+        data: [{
+          rowData: ["", ""],
+          children: []
+        }],
+        type: "",
+      },
       storedForm: newStoredForms,
     });
   }
@@ -76,7 +91,10 @@ class App extends Component {
   renderStoredForms() {
     const storedForms = this.state.storedForms.map( (form, index) => {
       const formatedForm = form['data'].map( (row, rowIndex) => {
-        return row[0] || row[1] ? <div key={rowIndex}>{`${row[0]}: ${row[1]}`}</div> : null;
+        return row['rowData'][0] || row['rowData'][1] ?
+          <div key={rowIndex}>
+            {`${row['rowData'][0]}: ${row['rowData'][1]}`}
+          </div> : null;
       })
       return form['type'] === this.state.selectedType ? (
         <div key={index} className="stored-form">
@@ -91,12 +109,33 @@ class App extends Component {
     );
   }
 
+  handleParentify(e) {
+    const newForm = this.state.currentForm;
+    const index = e.target.value;
+    newForm['data'][index]['children'].push({
+      rowData: ["", ""],
+      children: []
+    });
+    this.setState({ currentForm: newForm, });
+  }
+
   renderForm() {
     const formElements = this.state.currentForm['data'].map( (row, index) => {
+      const children = row['children'].map( (child, childIndex) => {
+        console.log(child);
+        return (
+          <div key={childIndex}>
+            <input type="text" value={child['rowData'][0]} onChange={this.handleFormChange.bind(this, index, 0)}/>
+            <input type="text" value={child['rowData'][1]} onChange={this.handleFormChange.bind(this, index, 1)}/>
+          </div>
+        );
+      })
       return (
         <div key={index}>
-          <input type="text" value={row[0]} onChange={this.handleFormChange.bind(this, index, 0)}/>
-          <input type="text" value={row[1]} onChange={this.handleFormChange.bind(this, index, 1)}/>
+          <input type="text" value={row['rowData'][0]} onChange={this.handleFormChange.bind(this, index, 0)}/>
+          <input type="text" value={row['rowData'][1]} onChange={this.handleFormChange.bind(this, index, 1)}/>
+          <button value={index} onClick={this.handleParentify.bind(this)}>PARENTIFY</button>
+          {children}
         </div>
       );
     })

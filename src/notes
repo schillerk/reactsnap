@@ -1,0 +1,61 @@
+data viz bullshit
+
+nested rows
+  how does deep nesting work
+    pass a kind of "path" back up i guesssssss :/
+
+    right yeah okay
+      so currently my best idea is honestly to keep track of a path
+      so it's like a while current['children'] current = current['children']
+      except more like a BFS inside the loop
+      i mean it's just tree traversal if you think about it
+        okay so....
+        so that actually does work decently well, just using
+          BFS
+      and then for the handler you just index in to the row
+      well so the handler just needs acess to the right piece of state...
+        which means, yeah, indexing in
+      this is maybe a decent time to not build this thing badly too
+      i mean irl you would have a database
+      and the database would have like
+      mm yeah i can see how that sucks similarly
+      i guess i don't want to deal with that either
+
+      and then thinking at least a little long term
+      if all we have is these giant objects
+      is linking possible still
+      well so if you create a person
+      and then later want to create a company
+      and those two should know they're connected
+      well actually it should all be explicit
+      mm maybe maybe not
+      i mean yeah so you create a company
+      and inside the company you create a founder
+      oh yeah this whole thing
+      so you create a founder
+        And you're like @an
+      and then some shit pops up
+      and it's like
+      did you mean andrew ng
+      and it finds that record by....
+      just searching all values fuck it
+      and then name is special
+
+
+
+linking it all up
+
+
+delete stored forms
+delete rows
+stored forms as templates
+edit stored forms--
+
+
+currentForm: {
+  data: [{
+    rowData: ["", ""],
+    children: []
+  }],
+  type: ""
+},
