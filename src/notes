@@ -1,4 +1,22 @@
-data viz bullshit
+okay so what do i actually want to build now
+is uh
+let's just do nesting really well
+and get the data structure right
+so the storedForms right now is just everything
+so the things we'll need to be able to do is
+grab data by type
+right?
+for quick rendering
+yeah
+so then we should definitely have like
+storedForms{people: ...., companies:... }
+which means currentForm doesn't need type anymore
+and then the paths for nesting yeah
+  cool.
+uh so the type thing
+the interaction should be switching areas changes the stored forms and open form
+
+
 
 nested rows
   how does deep nesting work
@@ -40,6 +58,36 @@ nested rows
       and it finds that record by....
       just searching all values fuck it
       and then name is special
+so if we think about this differently
+what's really going on with the spreadsheet is that we're thiking about
+totally normalized data
+with one table for each entity type
+and one row for each entity
+and cells linking to rows
+and meaningless columns
+which is why i like the language of arrays/elements more
+so an element can like to another array
+in which case it seems like the appropriate way to actually store this
+at least for now is something like
+i mean maybe in the future we just go vanilla sql
+but for now it's like
+you have a dictionary for each table
+okay maybe it's duplicated so you can use ids or names as keys?
+wait so we need names as keys so you can find things quickly
+but you need ids cause names can be duplicated
+so just do something like name + id
+great done
+okay so when you "link" two things
+the default is just like
+okay your key is company, so look at the company dict
+it's a dict not an array cause we want fast lookup and also order doesn't mater
+okay so it's like
+alright try to guess based on the key
+and do some autocomplete bullshit
+but really it's a manually rendered list of options
+and then there's some bullshit to let oyu use arrows and enter to navigate
+or for starters just click
+great
 
 
 

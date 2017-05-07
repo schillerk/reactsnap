@@ -64,6 +64,12 @@ class App extends Component {
     this.maybeCreateNewRow(e);
   }
 
+  handleChildFormChange(row, path, e) {
+    console.log(row);
+    console.log(path);
+    console.log(e.target.value);
+  }
+
   maybeCreateNewRow(e) {
     e.preventDefault();
     const { openForms, selectedType } = this.state;
@@ -80,14 +86,11 @@ class App extends Component {
 
   handleFormSubmit(e) {
     const newStoredForms = this.state.storedForms;
+    const newOpenForms = this.state.openForms;
     newStoredForms[this.state.selectedType].push(this.state.openForms[this.state.selectedType]);
+    newOpenForms[this.state.selectedType] = [{ rowData: ["", ""], children: [] }];
     this.setState({
-      openForms: {
-        [this.state.selectedType]: [{
-          rowData: ["", ""],
-          children: [],
-        }],
-      },
+      openForms: newOpenForms,
       storedForm: newStoredForms,
     });
   }
@@ -120,29 +123,47 @@ class App extends Component {
     const index = e.target.value;
     newForm[selectedType][index]['children'].push({
       rowData: ["", ""],
-      children: []
+      children: [],
     });
     this.setState({ openForms: newForm, });
+  }
+
+  getTrackedChildren(children, currentPath) {
+    return children.map( (child, childIndex) => {
+      const trackedChild = child;
+      const newPath = currentPath;
+      newPath.push(childIndex);
+      trackedChild['path'] = newPath;
+      return trackedChild;
+    });
   }
 
   renderOpenForm() {
     const { openForms, selectedType } = this.state;
     const formElements = openForms[selectedType].map( (row, index) => {
-      const children = row['children'].map( (child, childIndex) => {
-        console.log(child);
-        return (
-          <div key={childIndex}>
-            <input type="text" value={child['rowData'][0]} onChange={this.handleFormChange.bind(this, index, 0)}/>
-            <input type="text" value={child['rowData'][1]} onChange={this.handleFormChange.bind(this, index, 1)}/>
-          </div>
-        );
-      })
+      const testchildren = [];
+      if (row['children'].length) {
+        row['path'] = [index]
+        const stack = this.getTrackedChildren(row['children'], row['path']);
+        let currentRow = row;
+        while (stack.length) {
+          currentRow = stack.pop();
+          stack.push(...this.getTrackedChildren(currentRow['children'], currentRow['path']));
+          testchildren.push(
+            <div key={`${index}child`}>
+              <input type="text" value={currentRow['rowData'][0]} onChange={this.handleChildFormChange.bind(this, currentRow['path'], 0)}/>
+              <input type="text" value={currentRow['rowData'][1]} onChange={this.handleChildFormChange.bind(this, currentRow['path'], 1)}/>
+            </div>
+          );
+        }
+      }
+
       return (
         <div key={index}>
           <input type="text" value={row['rowData'][0]} onChange={this.handleFormChange.bind(this, index, 0)}/>
           <input type="text" value={row['rowData'][1]} onChange={this.handleFormChange.bind(this, index, 1)}/>
           <button value={index} onClick={this.handleParentify.bind(this)}>PARENTIFY</button>
-          {children}
+          {testchildren}
         </div>
       );
     })
