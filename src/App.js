@@ -81,6 +81,8 @@ class App extends Component {
     this.setState({openForms: newForm});
   }
 
+
+
   maybeCreateNewRow(e) {
     e.preventDefault();
     const { openForms, selectedType } = this.state;
@@ -139,15 +141,32 @@ class App extends Component {
     this.setState({ openForms: newForm, });
   }
 
+  handleChildParentify(path, e) {
+    const { openForms, selectedType } = this.state;
+    const newPath = path;
+    console.log(newPath);
+    newPath.pop();
+    newPath.push('children');
+    newPath.unshift(selectedType)
+    const newForm = openForms;
+    const newChildren = _.get(newForm, newPath);
+    newChildren.push({
+      rowData: ["", ""],
+      children: [],
+    });
+    _.set(newForm, newPath, newChildren);
+    this.setState({openForms: newForm});
+  }
+
   getTrackedChildren(children, currentPath) {
-    return children.map( (child, childIndex) => {
+    const kids = children.map( (child, childIndex) => {
+      console.log(childIndex);
       const trackedChild = child;
-      const newPath = currentPath;
-      newPath.push(childIndex);
-      newPath.push('children');
-      trackedChild['path'] = newPath;
+      trackedChild['path'] = [...currentPath, childIndex, 'children'];
       return trackedChild;
     });
+    console.log(kids);
+    return kids;
   }
 
   renderOpenForm() {
@@ -156,15 +175,20 @@ class App extends Component {
       const testchildren = [];
       if (row['children'].length) {
         row['path'] = [index, 'children'];
+        let path = row['path'];
         const stack = this.getTrackedChildren(row['children'], row['path']);
         let currentRow = row;
         while (stack.length) {
+          console.log(stack);
           currentRow = stack.pop();
-          stack.push(...this.getTrackedChildren(currentRow['children'], currentRow['path']));
+          path = currentRow['path'];
+          stack.push(...this.getTrackedChildren(currentRow['children'], path));
           testchildren.push(
-            <div key={`${index}child`}>
-              <input type="text" value={currentRow['rowData'][0]} onChange={this.handleChildFormChange.bind(this, currentRow['path'], 0)}/>
-              <input type="text" value={currentRow['rowData'][1]} onChange={this.handleChildFormChange.bind(this, currentRow['path'], 1)}/>
+            <div key={path}>
+              {path}
+              <input type="text" value={currentRow['rowData'][0]} onChange={this.handleChildFormChange.bind(this, path, 0)}/>
+              <input type="text" value={currentRow['rowData'][1]} onChange={this.handleChildFormChange.bind(this, path, 1)}/>
+              <button onClick={this.handleChildParentify.bind(this, path)}>PARENTIFY</button>
             </div>
           );
         }
