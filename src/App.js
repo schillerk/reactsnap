@@ -73,15 +73,10 @@ class App extends Component {
     newPath.push('rowData');
     newPath.push(column)
     newPath.unshift(selectedType)
-    console.log(newPath)
     const newForm = openForms;
-    console.log(newForm);
     _.set(newForm, newPath, e.target.value);
-    console.log(newForm);
     this.setState({openForms: newForm});
   }
-
-
 
   maybeCreateNewRow(e) {
     e.preventDefault();
@@ -112,10 +107,33 @@ class App extends Component {
     const { storedForms, selectedType } = this.state;
     const renderedForms = storedForms[selectedType].map( (form, index) => {
       const formatedForm = form.map( (row, rowIndex) => {
-        return row['rowData'][0] || row['rowData'][1] ?
-          <div key={rowIndex}>
-            {`${row['rowData'][0]}: ${row['rowData'][1]}`}
-          </div> : null;
+
+        const testchildren = [
+          <div key={'parent'}>
+            {row['rowData'][0]}
+            {row['rowData'][1]}
+          </div>
+        ];
+        if (row['children'].length) {
+          row['path'] = [rowIndex, 'children'];
+          let path = row['path'];
+          const stack = this.getTrackedChildren(row['children'], row['path']);
+          let currentRow = row;
+          while (stack.length) {
+            currentRow = stack.pop();
+            path = currentRow['path'];
+            stack.push(...this.getTrackedChildren(currentRow['children'], path));
+            testchildren.push(
+              <div key={path}>
+                {path}
+                {currentRow['rowData'][0]}
+                {currentRow['rowData'][1]}
+              </div>
+            );
+          }
+        }
+
+        return testchildren;
       })
       return (
         <div key={index} className="stored-form">
@@ -134,7 +152,7 @@ class App extends Component {
     const { openForms, selectedType } = this.state;
     const newForm = openForms;
     const index = e.target.value;
-    newForm[selectedType][index]['children'].push({
+    newForm[selectedType][index]['children'].unshift({
       rowData: ["", ""],
       children: [],
     });
@@ -150,7 +168,7 @@ class App extends Component {
     newPath.unshift(selectedType)
     const newForm = openForms;
     const newChildren = _.get(newForm, newPath);
-    newChildren.push({
+    newChildren.unshift({
       rowData: ["", ""],
       children: [],
     });
@@ -179,7 +197,6 @@ class App extends Component {
         const stack = this.getTrackedChildren(row['children'], row['path']);
         let currentRow = row;
         while (stack.length) {
-          console.log(stack);
           currentRow = stack.pop();
           path = currentRow['path'];
           stack.push(...this.getTrackedChildren(currentRow['children'], path));
