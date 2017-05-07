@@ -1,21 +1,7 @@
-okay so what do i actually want to build now
-is uh
-let's just do nesting really well
-and get the data structure right
-so the storedForms right now is just everything
-so the things we'll need to be able to do is
-grab data by type
-right?
-for quick rendering
-yeah
-so then we should definitely have like
-storedForms{people: ...., companies:... }
-which means currentForm doesn't need type anymore
-and then the paths for nesting yeah
-  cool.
-uh so the type thing
-the interaction should be switching areas changes the stored forms and open form
-
+okay so should children auto add new rows
+it's sort of uh
+i guess it doesn't matter too much
+but probably yeah lol
 
 
 nested rows

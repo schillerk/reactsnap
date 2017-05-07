@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
 
+import _ from 'lodash';
+
 const DEFAULT_TYPE = "People";
 
 class App extends Component {
@@ -56,18 +58,27 @@ class App extends Component {
     });
   }
 
-  handleFormChange(row, index, e) {
+  handleFormChange(row, column, e) {
     const { openForms, selectedType } = this.state;
     const newForm = openForms;
-    newForm[selectedType][row]['rowData'][index] = e.target.value;
+    newForm[selectedType][row]['rowData'][column] = e.target.value;
     this.setState({openForms: newForm});
     this.maybeCreateNewRow(e);
   }
 
-  handleChildFormChange(row, path, e) {
-    console.log(row);
-    console.log(path);
-    console.log(e.target.value);
+  handleChildFormChange(path, column, e) {
+    const { openForms, selectedType } = this.state;
+    const newPath = path;
+    newPath.pop();
+    newPath.push('rowData');
+    newPath.push(column)
+    newPath.unshift(selectedType)
+    console.log(newPath)
+    const newForm = openForms;
+    console.log(newForm);
+    _.set(newForm, newPath, e.target.value);
+    console.log(newForm);
+    this.setState({openForms: newForm});
   }
 
   maybeCreateNewRow(e) {
@@ -133,6 +144,7 @@ class App extends Component {
       const trackedChild = child;
       const newPath = currentPath;
       newPath.push(childIndex);
+      newPath.push('children');
       trackedChild['path'] = newPath;
       return trackedChild;
     });
@@ -143,7 +155,7 @@ class App extends Component {
     const formElements = openForms[selectedType].map( (row, index) => {
       const testchildren = [];
       if (row['children'].length) {
-        row['path'] = [index]
+        row['path'] = [index, 'children'];
         const stack = this.getTrackedChildren(row['children'], row['path']);
         let currentRow = row;
         while (stack.length) {
