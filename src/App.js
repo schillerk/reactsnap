@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
 
 import _ from 'lodash';
@@ -10,6 +9,7 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      names: { [DEFAULT_TYPE]: "" },
       text: "",
       types: [DEFAULT_TYPE],
       selectedType: DEFAULT_TYPE,
@@ -23,16 +23,25 @@ class App extends Component {
     };
   }
 
+  handleNameChange(e){
+    const newNames = this.state.names;
+    newNames[this.state.selectedType] = e.target.value;
+    this.setState({ names: newNames });
+  }
+
   handleSubmit(e) {
     e.preventDefault();
     const newTypes = this.state.types;
     const newOpenForms = this.state.openForms;
     const newStoredForms = this.state.storedForms;
+    const newNames = this.state.names;
     newTypes.push(this.state.text);
     newOpenForms[this.state.text] = [{ rowData: ["", ""], children: [] }];
     newStoredForms[this.state.text] = [];
+    newNames[this.state.text] = "";
     this.setState({
       text: "",
+      names: newNames,
       types: newTypes,
       openForms: newOpenForms,
       storedForms: newStoredForms,
@@ -95,9 +104,13 @@ class App extends Component {
   handleFormSubmit(e) {
     const newStoredForms = this.state.storedForms;
     const newOpenForms = this.state.openForms;
-    newStoredForms[this.state.selectedType].push(this.state.openForms[this.state.selectedType]);
+    const newNames = this.state.names;
+    newOpenForms[this.state.selectedType]['name'] = this.state.names[this.state.selectedType];
+    newStoredForms[this.state.selectedType].push(newOpenForms[this.state.selectedType]);
     newOpenForms[this.state.selectedType] = [{ rowData: ["", ""], children: [] }];
+    newNames[this.state.selectedType] = "";
     this.setState({
+      names: newNames,
       openForms: newOpenForms,
       storedForm: newStoredForms,
     });
@@ -105,42 +118,47 @@ class App extends Component {
 
   renderStoredForms() {
     const { storedForms, selectedType } = this.state;
+
     const renderedForms = storedForms[selectedType].map( (form, index) => {
       const formatedForm = form.map( (row, rowIndex) => {
 
-        const testchildren = [
-          <div key={'parent'}>
-            {row['rowData'][0]}
-            {row['rowData'][1]}
-          </div>
-        ];
-        if (row['children'].length) {
-          row['path'] = [rowIndex, 'children'];
-          let path = row['path'];
-          const stack = this.getTrackedChildren(row['children'], row['path']);
-          let currentRow = row;
-          while (stack.length) {
-            currentRow = stack.pop();
-            path = currentRow['path'];
-            stack.push(...this.getTrackedChildren(currentRow['children'], path));
-            testchildren.push(
-              <div key={path}>
-                {path}
-                {currentRow['rowData'][0]}
-                {currentRow['rowData'][1]}
-              </div>
-            );
+          const testchildren = [
+            <div key={'parent'}>
+              {row['rowData'][0]}:&emsp;&emsp;
+              {row['rowData'][1]}
+            </div>
+          ];
+          if (row['children'].length) {
+            row['path'] = [rowIndex, 'children'];
+            let path = row['path'];
+            const stack = this.getTrackedChildren(row['children'], row['path']);
+            let currentRow = row;
+            while (stack.length) {
+              currentRow = stack.pop();
+              path = currentRow['path'];
+              stack.push(...this.getTrackedChildren(currentRow['children'], path));
+              let bufferStyle = {
+                marginLeft: `${(path.length-2)*10}px`,
+              }
+              testchildren.push(
+                <div key={path} style={bufferStyle}>
+                  {currentRow['rowData'][0]}:&emsp;&emsp;
+                  {currentRow['rowData'][1]}
+                </div>
+              );
+            }
           }
-        }
+          return testchildren;
 
-        return testchildren;
       })
       return (
         <div key={index} className="stored-form">
+          {form['name']}
           {formatedForm}
         </div>
       );
     })
+
     return (
       <div className="stored-forms">
         {renderedForms}
@@ -161,11 +179,7 @@ class App extends Component {
 
   handleChildParentify(path, e) {
     const { openForms, selectedType } = this.state;
-    const newPath = path;
-    console.log(newPath);
-    newPath.pop();
-    newPath.push('children');
-    newPath.unshift(selectedType)
+    const newPath = [selectedType, ...path];
     const newForm = openForms;
     const newChildren = _.get(newForm, newPath);
     newChildren.unshift({
@@ -177,14 +191,11 @@ class App extends Component {
   }
 
   getTrackedChildren(children, currentPath) {
-    const kids = children.map( (child, childIndex) => {
-      console.log(childIndex);
+    return children.map( (child, childIndex) => {
       const trackedChild = child;
       trackedChild['path'] = [...currentPath, childIndex, 'children'];
       return trackedChild;
     });
-    console.log(kids);
-    return kids;
   }
 
   renderOpenForm() {
@@ -200,12 +211,14 @@ class App extends Component {
           currentRow = stack.pop();
           path = currentRow['path'];
           stack.push(...this.getTrackedChildren(currentRow['children'], path));
+          let bufferStyle = {
+            marginLeft: `${(path.length-2)*10}px`,
+          }
           testchildren.push(
-            <div key={path}>
-              {path}
+            <div key={path} style={bufferStyle}>
               <input type="text" value={currentRow['rowData'][0]} onChange={this.handleChildFormChange.bind(this, path, 0)}/>
               <input type="text" value={currentRow['rowData'][1]} onChange={this.handleChildFormChange.bind(this, path, 1)}/>
-              <button onClick={this.handleChildParentify.bind(this, path)}>PARENTIFY</button>
+              <button onClick={this.handleChildParentify.bind(this, path)}>v</button>
             </div>
           );
         }
@@ -215,7 +228,7 @@ class App extends Component {
         <div key={index}>
           <input type="text" value={row['rowData'][0]} onChange={this.handleFormChange.bind(this, index, 0)}/>
           <input type="text" value={row['rowData'][1]} onChange={this.handleFormChange.bind(this, index, 1)}/>
-          <button value={index} onClick={this.handleParentify.bind(this)}>PARENTIFY</button>
+          <button value={index} onClick={this.handleParentify.bind(this)}>v</button>
           {testchildren}
         </div>
       );
@@ -223,6 +236,7 @@ class App extends Component {
     return (
       <div>
         <h1>{selectedType}</h1>
+        Name: <input type="text" value={this.state.names[selectedType]} onChange={this.handleNameChange.bind(this)}/>
         {formElements}
         <button onClick={this.handleFormSubmit.bind(this)}>SUBMIT</button>
       </div>
@@ -233,7 +247,7 @@ class App extends Component {
     const types = this.state.types.map( (type, index) => {
       return (
         <div key={index}>
-          <button value={type} onClick={this.selectType.bind(this)}>V</button>
+          <button value={type} onClick={this.selectType.bind(this)}>&gt;</button>
           {type}
           <button value={index} onClick={this.handleClick.bind(this)}>X</button>
         </div>
@@ -246,15 +260,19 @@ class App extends Component {
     return (
       <div className="App">
         <div className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h2>Welcome to Snapshot</h2>
+          <h2>Snapshot</h2>
         </div>
-        <form onSubmit={this.handleSubmit.bind(this)}>
-          <input type="text" value={this.state.text} onChange={this.handleChange.bind(this)}/>
-        </form>
-        {this.renderTypes()}
-        {this.renderOpenForm()}
-        {this.renderStoredForms()}
+        <div className="types">
+          <h2>Types</h2>
+          <form onSubmit={this.handleSubmit.bind(this)}>
+            <input type="text" value={this.state.text} onChange={this.handleChange.bind(this)}/>
+          </form>
+          {this.renderTypes()}
+        </div>
+        <div className="forms">
+          {this.renderOpenForm()}
+          {this.renderStoredForms()}
+        </div>
       </div>
     );
   }
