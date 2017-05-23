@@ -3,7 +3,7 @@ import './App.css';
 
 import _ from 'lodash';
 
-const DEFAULT_TYPE = "People";
+const DEFAULT_TYPE = "Companies";
 
 class App extends Component {
   constructor(props) {
@@ -102,17 +102,45 @@ class App extends Component {
   }
 
   handleFormSubmit(e) {
-    const newStoredForms = this.state.storedForms;
-    const newOpenForms = this.state.openForms;
-    const newNames = this.state.names;
-    newOpenForms[this.state.selectedType]['name'] = this.state.names[this.state.selectedType];
-    newStoredForms[this.state.selectedType].push(newOpenForms[this.state.selectedType]);
-    newOpenForms[this.state.selectedType] = [{ rowData: ["", ""], children: [] }];
-    newNames[this.state.selectedType] = "";
+    const { selectedType, storedForms, openForms, names, types } = this.state;
+
+    openForms[selectedType]['name'] = names[selectedType];
+    storedForms[selectedType].push(openForms[selectedType]);
+
+    const keys = []
+    openForms[selectedType].forEach( (row, rowIndex) => {
+      keys.push(row['rowData'][0]);
+      row['path'] = [rowIndex, 'children'];
+      let path = row['path'];
+      const stack = this.getTrackedChildren(row['children'], row['path']);
+      let currentRow = row;
+      while (stack.length) {
+        currentRow = stack.pop();
+        keys.push(currentRow['rowData'][0]);
+        path = currentRow['path'];
+        stack.push(...this.getTrackedChildren(currentRow['children'], path));
+      }
+      return null;
+    });
+
+    keys.forEach( key => {
+      if (key.length && !types.includes(key)){
+        types.push(key);
+        openForms[key] = [{ rowData: ["", ""], children: [] }];
+        storedForms[key] = [];
+        names[key] = "";
+      }
+    });
+
+    openForms[this.state.selectedType] = [{ rowData: ["", ""], children: [] }];
+    names[this.state.selectedType] = "";
+
     this.setState({
-      names: newNames,
-      openForms: newOpenForms,
-      storedForm: newStoredForms,
+      names: names,
+      text: "",
+      types: types,
+      openForms: openForms,
+      storedForms: storedForms,
     });
   }
 
